@@ -6,9 +6,6 @@ export type UserDocument = HydratedDocument<User>;
 
 @Schema({ timestamps: true })
 export class User {
-  @Prop({ type: Number, autoIncrement: true })
-  id: number;
-
   @Prop({ required: true, maxlength: 20 })
   firstName: string;
 

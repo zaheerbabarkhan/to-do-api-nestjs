@@ -10,6 +10,7 @@ import { MailService } from '../mail/mail.service';
 import { JwtService } from '@nestjs/jwt';
 import { UserLoginDTO } from './dto/user-login.dto';
 import status from 'src/constants/status';
+import { Payload } from '../jwt/types/jwt.types';
 
 @Injectable()
 export class UserService {
@@ -81,8 +82,40 @@ export class UserService {
     return {
       message: "Login successful",
       token,
-  };
+    };
 
+  }
+
+  async confirmEmail(token: string) {
+    let payload: Payload;
+    try {
+        payload = await this.jwtService.verifyAsync(token);
+    } catch (error) {
+      console.log(error);
+      throw new HttpException("Unauthorized", HttpStatus.UNAUTHORIZED,);
+    }
+    const user = await this.UserModel.findOne({
+      _id: payload.userId, 
+      statusId: {
+        $ne: status.DELETED
+      }
+    })
+
+    if (!user) {
+      console.log("not found");
+      throw new HttpException("Invalid credentials", HttpStatus.BAD_REQUEST)
+    }
+    
+    if (user.statusId === status.ACTIVE) {
+      throw new HttpException("Email confirmed already", HttpStatus.BAD_REQUEST)
+    }
+
+    user.statusId = status.ACTIVE;
+    await user.save();
+    return {
+      message: "Email confirmed successfully"
+    }
+    
   }
   findAll() {
     return `This action returns all user`;

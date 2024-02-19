@@ -46,5 +46,9 @@ export default {
         SECRET_KEY: String(env.AWS_CLIENT_SECRET_KEY),
         REGION: env.AWS_REGION,
         BUCKET_NAME: String(env.AWS_S3_BUCKET)
+    },
+    REDIS: {
+        REDIS_HOST: env.REDIS_HOST,
+        REDIS_PORT: env.REDIS_PORT
     }
 };

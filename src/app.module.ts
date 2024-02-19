@@ -6,6 +6,7 @@ import { MailModule } from './modules/mail/mail.module';
 import config from './config/config';
 import { JwtModule } from '@nestjs/jwt';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { RedisModule } from './modules/redis/redis.module';
 import * as nodemailer from "nodemailer";
 
 const smtpConfig = config.SMTP;
@@ -27,6 +28,6 @@ const smtpConfig = config.SMTP;
       from: '"no-reply" <example@example.com>',
     }}),JwtModule.register({
       secret: config.JWT.SECRET_KEY,
-  }), UserModule, TodoModule, MailModule],
+  }), RedisModule, UserModule, TodoModule, MailModule],
 })
 export class AppModule {}

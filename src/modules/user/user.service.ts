@@ -10,18 +10,20 @@ import { MailService } from '../mail/mail.service';
 import { JwtService } from '@nestjs/jwt';
 import { UserLoginDTO } from './dto/user-login.dto';
 import status from 'src/constants/status';
-import { Payload } from '../jwt/types/jwt.types';
+import { Payload } from '../../types/jwt.types';
+import { RedisService } from '../redis/redis.service';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectModel(User.name) private readonly UserModel: Model<UserDocument>,
-    private mailService: MailService,
-    private jwtService: JwtService
-    ) {}
+    private readonly mailService: MailService,
+    private readonly jwtService: JwtService,
+    private readonly redisService: RedisService
+  ) { }
 
   async create(createUserDto: CreateUserDto) {
-    const { email, firstName, lastName, password} = createUserDto;
+    const { email, firstName, lastName, password } = createUserDto;
     const user = await this.UserModel.findOne({
       email: createUserDto.email,
     })
@@ -40,22 +42,22 @@ export class UserService {
     })
     let emailSuccessMessage = "Confirmation email sent successfully.";
     try {
-        if (config.NODE_ENV !== "test") {
-            await this.mailService.confirmationEmail(newUser.email, token);
-        }
+      if (config.NODE_ENV !== "test") {
+        await this.mailService.confirmationEmail(newUser.email, token);
+      }
     } catch (error) {
       console.log(error);
-        emailSuccessMessage = "Confirmation email failed. Please provide a valid email or contact support."; 
+      emailSuccessMessage = "Confirmation email failed. Please provide a valid email or contact support.";
     }
-    
+
     return {
-        user: newUser,
-        message: emailSuccessMessage
+      user: newUser,
+      message: emailSuccessMessage
     };
   }
 
   async login(userLoginDTO: UserLoginDTO) {
-    const {email, password} = userLoginDTO;
+    const { email, password } = userLoginDTO;
     const user = await this.UserModel.findOne({
       email,
       statusId: {
@@ -66,18 +68,20 @@ export class UserService {
     if (!user) {
       throw new HttpException("Invalid credentials", HttpStatus.BAD_REQUEST)
     }
-    
+
     if (user.statusId === status.PENDING) {
       throw new HttpException("Confirm your email please", HttpStatus.BAD_REQUEST)
     }
 
-    const isPasswordCorrect =  bcrypt.compareSync(password, user.password);
+    const isPasswordCorrect = bcrypt.compareSync(password, user.password);
     if (!isPasswordCorrect) {
       throw new HttpException("Invalid credentials.", HttpStatus.BAD_REQUEST,);
     }
 
     const token = this.jwtService.sign({
       userId: user._id
+    }, {
+      expiresIn: config.JWT.EXPIRY
     })
     return {
       message: "Login successful",
@@ -89,13 +93,13 @@ export class UserService {
   async confirmEmail(token: string) {
     let payload: Payload;
     try {
-        payload = await this.jwtService.verifyAsync(token);
+      payload = await this.jwtService.verifyAsync(token);
     } catch (error) {
       console.log(error);
       throw new HttpException("Unauthorized", HttpStatus.UNAUTHORIZED,);
     }
     const user = await this.UserModel.findOne({
-      _id: payload.userId, 
+      _id: payload.userId,
       statusId: {
         $ne: status.DELETED
       }
@@ -105,7 +109,7 @@ export class UserService {
       console.log("not found");
       throw new HttpException("Invalid credentials", HttpStatus.BAD_REQUEST)
     }
-    
+
     if (user.statusId === status.ACTIVE) {
       throw new HttpException("Email confirmed already", HttpStatus.BAD_REQUEST)
     }
@@ -115,10 +119,16 @@ export class UserService {
     return {
       message: "Email confirmed successfully"
     }
-    
+
   }
-  findAll() {
-    return `This action returns all user`;
+
+  async logout(userId: string, token: string) {
+    const jwtData = this.jwtService.decode(token);
+    const expiryTimeLeft = Math.floor(Math.abs( jwtData.exp - (Date.now() /1000)));
+    await this.redisService.storeUserToken(token, userId, expiryTimeLeft);
+    return {
+        message: "User logged out",
+    };
   }
 
   findOne(id: number) {

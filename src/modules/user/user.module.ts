@@ -6,6 +6,7 @@ import { UserSchema } from './schemas/User.schema';
 import { MailModule } from '../mail/mail.module';
 import { JwtModule } from '@nestjs/jwt';
 import config from 'src/config/config';
+import { RedisModule } from '../redis/redis.module';
 
 @Module({
   imports: [MongooseModule.forFeature([{
@@ -13,7 +14,7 @@ import config from 'src/config/config';
     schema: UserSchema
   }]),JwtModule.register({
     secret: config.JWT.SECRET_KEY
-  }), MailModule],
+  }), MailModule, RedisModule],
   controllers: [UserController],
   providers: [UserService],
 })

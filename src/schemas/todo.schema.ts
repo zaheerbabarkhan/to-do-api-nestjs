@@ -2,12 +2,21 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
 import status from "../constants/status"
 import { UserDocument } from './User.schema';
+import { Type } from 'class-transformer';
+import { TodoFile } from './file.schema';
 
 
 export type ToDoDocument = HydratedDocument<Todo>;
 
 
-@Schema({ timestamps: true })
+@Schema({ 
+  timestamps: true,
+  toJSON: {
+    getters: true,
+    virtuals: true,
+  },
+  id: false
+ })
 export class Todo {
   @Prop({ required: true, maxlength: 255, type: String })
   title: string;
@@ -35,6 +44,15 @@ export class Todo {
 
   @Prop({ type: Date })
   deletedAt: Date;
+
+  @Type(() => TodoFile)
+  files: TodoFile[]
 }
 
 export const ToDoSchema = SchemaFactory.createForClass(Todo);
+
+ToDoSchema.virtual("files", {
+  ref: TodoFile.name,
+  localField: '_id',
+  foreignField: 'todoId'
+})

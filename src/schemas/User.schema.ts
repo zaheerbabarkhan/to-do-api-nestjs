@@ -4,7 +4,7 @@ import status from "../constants/status";
 
 export type UserDocument = HydratedDocument<User>;
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, id: false })
 export class User {
   @Prop({ required: true, maxlength: 20 })
   firstName: string;

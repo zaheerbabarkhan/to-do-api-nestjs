@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFiles, UseInterceptors, Request, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFiles, UseInterceptors, Request, UseGuards, Put } from '@nestjs/common';
 import { TodoService } from './todo.service';
 import { CreateTodoDto } from './dto/create-todo.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '../auth/auth.guard';
+import { ParseObjectIdPipe } from './pipes/objectId.pipe';
 
 @UseGuards(AuthGuard)
 @Controller('todos')
@@ -22,18 +23,19 @@ export class TodoController {
   //   return this.todoService.findAll();
   // }
 
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.todoService.findOne(+id);
-  // }
+  @Get(':id')
+  findOne(@Param('id') id: string, @Request() req) {
+    return this.todoService.findOne(id, req.user._id);
+  }
 
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateTodoDto: UpdateTodoDto) {
-  //   return this.todoService.update(+id, updateTodoDto);
-  // }
+  @Put(':id')
+  @UseInterceptors(AnyFilesInterceptor())
+  update(@Body() updateTodoDto: UpdateTodoDto, @Param('id', ParseObjectIdPipe) id: string,@UploadedFiles() files: Array<Express.Multer.File>, @Request() req) {
+    return this.todoService.update(id, updateTodoDto, req.user._id, files);
+  }
 
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.todoService.remove(+id);
-  // }
+  @Delete(':id')
+  remove(@Param('id', ParseObjectIdPipe) id: string, @Request() req) {
+    return this.todoService.remove(id, req.user._id);
+  }
 }

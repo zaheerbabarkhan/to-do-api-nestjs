@@ -12,6 +12,7 @@ export type FileDocument = HydratedDocument<TodoFile>;
     getters: true,
     virtuals: true,
   },
+  id: false
 })
 export class TodoFile {
   @Prop({ required: true, maxlength: 255 })

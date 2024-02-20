@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { User, UserDocument } from './schemas/User.schema';
+import { User, UserDocument } from '../../schemas/User.schema';
 import { Model } from 'mongoose';
 import config from 'src/config/config';
 import * as bcrypt from "bcrypt";
@@ -16,7 +16,7 @@ import { RedisService } from '../redis/redis.service';
 @Injectable()
 export class UserService {
   constructor(
-    @InjectModel(User.name) private readonly UserModel: Model<UserDocument>,
+    @InjectModel(User.name) private readonly User: Model<UserDocument>,
     private readonly mailService: MailService,
     private readonly jwtService: JwtService,
     private readonly redisService: RedisService
@@ -24,14 +24,14 @@ export class UserService {
 
   async create(createUserDto: CreateUserDto) {
     const { email, firstName, lastName, password } = createUserDto;
-    const user = await this.UserModel.findOne({
+    const user = await this.User.findOne({
       email: createUserDto.email,
     })
     if (user) {
       throw new HttpException("Email already registered", HttpStatus.BAD_REQUEST);
     }
     const passwordHash = await bcrypt.hash(password, config.BCRYPT.SALT_ROUNDS);
-    const newUser = await this.UserModel.create({
+    const newUser = await this.User.create({
       email,
       firstName,
       lastName,
@@ -58,7 +58,7 @@ export class UserService {
 
   async login(userLoginDTO: UserLoginDTO) {
     const { email, password } = userLoginDTO;
-    const user = await this.UserModel.findOne({
+    const user = await this.User.findOne({
       email,
       statusId: {
         $ne: status.DELETED
@@ -98,7 +98,7 @@ export class UserService {
       console.log(error);
       throw new HttpException("Unauthorized", HttpStatus.UNAUTHORIZED,);
     }
-    const user = await this.UserModel.findOne({
+    const user = await this.User.findOne({
       _id: payload.userId,
       statusId: {
         $ne: status.DELETED
@@ -129,17 +129,5 @@ export class UserService {
     return {
         message: "User logged out",
     };
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
-
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} user`;
   }
 }

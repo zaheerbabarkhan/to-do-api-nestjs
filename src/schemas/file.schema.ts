@@ -1,12 +1,19 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
-import status from '../../../constants/status';
+import status from '../constants/status';
 import { ToDoDocument } from './todo.schema';
+import { S3Service } from 'src/modules/s3/s3.service';
 
-export type FileDocument = HydratedDocument<File>;
+export type FileDocument = HydratedDocument<TodoFile>;
 
-@Schema({ timestamps: true })
-export class File {
+@Schema({
+  timestamps: true,
+  toJSON: {
+    getters: true,
+    virtuals: true,
+  },
+})
+export class TodoFile {
   @Prop({ required: true, maxlength: 255 })
   title: string;
 
@@ -26,4 +33,8 @@ export class File {
   deletedAt: Date;
 }
 
-export const FileSchema = SchemaFactory.createForClass(File);
+export const FileSchema = SchemaFactory.createForClass(TodoFile);
+
+FileSchema.virtual("signedURL").get(function name() {
+  return new S3Service().signedURL(this.title);
+})

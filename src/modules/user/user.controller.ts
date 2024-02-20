@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Query, Request, UseGuards } from '@nestjs/
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserLoginDTO } from './dto/user-login.dto';
-import { User } from './schemas/User.schema';
+import { User } from '../../schemas/User.schema';
 import { AuthGuard } from '../auth/auth.guard';
 
 @Controller('users')
@@ -31,22 +31,5 @@ export class UserController {
     const token = req.headers.authorization.split(" ")[1];
     return this.userService.logout(req.user._id, token);
   }
-  // findAll() {
-  //   return this.userService.findAll();
-  // }
-
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.userService.findOne(+id);
-  // }
-
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-  //   return this.userService.update(+id, updateUserDto);
-  // }
-
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.userService.remove(+id);
-  // }
+  
 }

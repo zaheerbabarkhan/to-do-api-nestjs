@@ -8,13 +8,13 @@ import { JwtModule } from '@nestjs/jwt';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { RedisModule } from './modules/redis/redis.module';
 import * as nodemailer from "nodemailer";
-
+import { Schemas } from './schemas';
 const smtpConfig = config.SMTP;
 @Module({
   imports: [
     MongooseModule.forRoot(`mongodb+srv://${config.DB.DB_USER}:${config.DB.DB_PASSWORD}@cluster0.xlw87.mongodb.net/?retryWrites=true&w=majority`, {
       dbName: config.DB.DB_NAME
-  }),MailerModule.forRoot({
+  }), MongooseModule.forFeature(Schemas),MailerModule.forRoot({
     // transport: `smtps://${config.SMTP.SMTP_EMAIL}:${config.SMTP.SMTP_PASSWORD}@${config.SMTP.SMTP_HOST}`,
     transport: nodemailer.createTransport({
       host: smtpConfig.SMTP_HOST,

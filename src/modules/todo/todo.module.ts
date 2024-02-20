@@ -2,18 +2,17 @@ import { Module } from '@nestjs/common';
 import { TodoService } from './todo.service';
 import { TodoController } from './todo.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ToDoSchema } from './schemas/todo.schema';
-import { FileSchema } from './schemas/file.schema';
+import { JwtModule } from '@nestjs/jwt';
+import { Schemas } from 'src/schemas';
+import { RedisModule } from '../redis/redis.module';
+import { S3Service } from '../s3/s3.service';
+import config from 'src/config/config';
 
 @Module({
-  imports: [MongooseModule.forFeature([{
-    name: "Todo",
-    schema: ToDoSchema
-  }, {
-    name: "TodoFile",
-    schema: FileSchema
-  }])],
+  imports: [JwtModule.register({
+    secret: config.JWT.SECRET_KEY
+  }), MongooseModule.forFeature(Schemas), RedisModule],
   controllers: [TodoController],
-  providers: [TodoService],
+  providers: [TodoService, S3Service],
 })
 export class TodoModule {}

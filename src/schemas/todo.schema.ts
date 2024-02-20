@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
-import status from "../../../constants/status"
-import { UserDocument } from 'src/modules/user/schemas/User.schema';
+import status from "../constants/status"
+import { UserDocument } from './User.schema';
 
 
 export type ToDoDocument = HydratedDocument<Todo>;

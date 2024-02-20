@@ -10,7 +10,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Request } from 'express';
 import { Model } from 'mongoose';
 import { Payload } from 'src/types/jwt.types';
-import { User, UserDocument } from '../user/schemas/User.schema';
+import { User, UserDocument } from '../../schemas/User.schema';
 import status from 'src/constants/status';
 import { RedisService } from '../redis/redis.service';
 

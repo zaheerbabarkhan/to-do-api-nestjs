@@ -1,12 +1,14 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTodoDto } from './dto/create-todo.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { ToDoDocument, Todo } from 'src/schemas/todo.schema';
-import { Model } from 'mongoose';
+import { FilterQuery, Model, SortOrder } from 'mongoose';
 import { S3Service } from '../s3/s3.service';
 import { TodoFile, FileDocument } from 'src/schemas/file.schema';
 import status from 'src/constants/status';
 import { UpdateTodoDto } from './dto/update-todo.dto';
+import { AllTodoDTO } from './dto/all-todo.dto';
+import moment from "moment";
 
 @Injectable()
 export class TodoService {
@@ -51,10 +53,73 @@ export class TodoService {
 
   }
 
-  // findAll() {
-  //   return `This action returns all todo`;
-  // }
+  async findAll(filters: FilterQuery<Todo>, sort: string = "createdAt", sortDir: SortOrder = "asc", attributes: string) {
+    const allowedAttributes = ["title", "description", "dueDate", "statusId", "completedAt", "userId", "createdAt"];
+    for (const value of attributes.split(",")) {
+      if (!allowedAttributes.includes(value)) {
+        throw new BadRequestException(`${value} not in todo`)
+      }
+    }
+    const todos = await this.Todo.find(filters).sort([[sort, sortDir]]).select(attributes.split(",").join(" ")).exec()
+    return todos;
+  }
 
+  queryClause(allTodoDTO: AllTodoDTO, userId: string) {
+    const {completedAt, dueDate, query, statusId} = allTodoDTO;
+    let filters: FilterQuery<Todo> = {
+      userId,
+      statusId: {
+        $ne: status.DELETED
+      }
+    }
+    if (statusId) {
+      filters = {
+        ...filters,
+        $or: [{
+          statusId,
+        }]
+      }
+    }
+    if (query) {
+      filters = {
+        ...filters,
+        $and: [{
+          $or: [
+            {
+              title: {
+                $regex: `.*${query}*.`
+              }
+            }, {
+              description: {
+                $regex: `.*${query}*.`
+              }
+            }
+          ]
+        }]
+      }
+    }
+    if (completedAt) {
+      const completedAtMoment = moment(completedAt).utc()
+      filters = {
+        ...filters,
+        completedAt: {
+          $gte: completedAtMoment.startOf("day"),
+          $lt: completedAtMoment.endOf("day")
+        }
+      }
+    }
+    if (dueDate) {
+      const dueDateMoment = moment(dueDate).utc()
+      filters = {
+        ...filters,
+        dueDate: {
+          $gte: dueDateMoment.startOf("day"),
+          $lt: dueDateMoment.endOf("day")
+        }
+      }
+    }
+    return filters
+  }
   async findOne(id: string, userId: string) {
     const todo = await this.Todo.findOne({
       _id: id,
@@ -76,7 +141,7 @@ export class TodoService {
 
     let todo = await this.Todo.findOne({
       _id: id,
-      userId, 
+      userId,
       statusId: {
         $ne: status.DELETED
       }
@@ -131,7 +196,7 @@ export class TodoService {
   async remove(id: string, userId: string) {
     const todo = await this.Todo.findOne({
       _id: id,
-      userId, 
+      userId,
       statusId: {
         $ne: status.DELETED
       }

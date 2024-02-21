@@ -27,7 +27,7 @@ export class Todo {
   @Prop({ required: true, type: Date })
   dueDate: Date;
 
-  @Prop({ required: true, default: status.ACTIVE })
+  @Prop({ required: true, default: status.PENDING })
   statusId: number;
 
   @Prop({ type: Date })

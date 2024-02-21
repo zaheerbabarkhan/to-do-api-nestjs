@@ -106,7 +106,6 @@ export class UserService {
     })
 
     if (!user) {
-      console.log("not found");
       throw new HttpException("Invalid credentials", HttpStatus.BAD_REQUEST)
     }
 

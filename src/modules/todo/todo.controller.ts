@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFiles, UseInterceptors, Request, UseGuards, Put, Query, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFiles, UseInterceptors, Request, UseGuards, Put, Query, UsePipes, ValidationPipe, Req } from '@nestjs/common';
 import { TodoService } from './todo.service';
 import { CreateTodoDto } from './dto/create-todo.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
@@ -10,7 +10,7 @@ import { AllTodoDTO } from './dto/all-todo.dto';
 @UseGuards(AuthGuard)
 @Controller('todos')
 export class TodoController {
-  constructor(private readonly todoService: TodoService) {}
+  constructor(private readonly todoService: TodoService) { }
 
 
   @Post()
@@ -21,11 +21,37 @@ export class TodoController {
 
   @Get()
   findAll(@Request() req, @Query() allTodoDTO: AllTodoDTO) {
-    const {sortBy, sortDir, attributes} = allTodoDTO;
+    const { sortBy, sortDir, attributes } = allTodoDTO;
     const filters = this.todoService.queryClause(allTodoDTO, req.user._id)
     return this.todoService.findAll(filters, sortBy, sortDir, attributes);
   }
 
+
+  @Get("count")
+  totalCount(@Request() req) {
+    return this.todoService.totalCount(req.user._id)
+  }
+
+  @Get("per-day-count")
+  async perDayCount(@Request() req) {
+    return this.todoService.perDayCount(req.user._id)
+  }
+
+  @Get("overdue-count")
+  async overdueCount(@Request() req) {
+    return this.todoService.overdueCount(req.user._id)
+  }
+
+  @Get("avg-per-day")
+  async avgCompletedPerDay(@Request() req) {
+    return this.todoService.avgCompletedPerDay(req.user._id)
+  }
+
+  @Get("max-per-day")
+  async maxCompletedPerDay(@Request() req) {
+    return this.todoService.maxCompletedPerDay(req.user._id)
+  }
+  
   @Get(':id')
   findOne(@Param('id') id: string, @Request() req) {
     return this.todoService.findOne(id, req.user._id);
@@ -33,7 +59,7 @@ export class TodoController {
 
   @Put(':id')
   @UseInterceptors(AnyFilesInterceptor())
-  update(@Body() updateTodoDto: UpdateTodoDto, @Param('id', ParseObjectIdPipe) id: string,@UploadedFiles() files: Array<Express.Multer.File>, @Request() req) {
+  update(@Body() updateTodoDto: UpdateTodoDto, @Param('id', ParseObjectIdPipe) id: string, @UploadedFiles() files: Array<Express.Multer.File>, @Request() req) {
     return this.todoService.update(id, updateTodoDto, req.user._id, files);
   }
 
@@ -41,4 +67,6 @@ export class TodoController {
   remove(@Param('id', ParseObjectIdPipe) id: string, @Request() req) {
     return this.todoService.remove(id, req.user._id);
   }
+
+
 }

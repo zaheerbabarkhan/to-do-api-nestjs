@@ -9,6 +9,7 @@ import status from 'src/constants/status';
 import { UpdateTodoDto } from './dto/update-todo.dto';
 import { AllTodoDTO } from './dto/all-todo.dto';
 import moment from "moment";
+import { AvgCompletedPerDay, MaxCompletedPerDay, OverDueCountResult, PerDayCcountResult, TotalCountResult } from './types/reports.types';
 
 @Injectable()
 export class TodoService {
@@ -55,17 +56,19 @@ export class TodoService {
 
   async findAll(filters: FilterQuery<Todo>, sort: string = "createdAt", sortDir: SortOrder = "asc", attributes: string) {
     const allowedAttributes = ["title", "description", "dueDate", "statusId", "completedAt", "userId", "createdAt"];
-    for (const value of attributes.split(",")) {
-      if (!allowedAttributes.includes(value)) {
-        throw new BadRequestException(`${value} not in todo`)
+    if (attributes) {
+      for (const value of attributes.split(",")) {
+        if (!allowedAttributes.includes(value)) {
+          throw new BadRequestException(`${value} not in todo`)
+        }
       }
     }
-    const todos = await this.Todo.find(filters).sort([[sort, sortDir]]).select(attributes.split(",").join(" ")).exec()
+    const todos = await this.Todo.find(filters).sort([[sort, sortDir]]).select(attributes ? attributes.split(",").join(" ") : "").exec()
     return todos;
   }
 
   queryClause(allTodoDTO: AllTodoDTO, userId: string) {
-    const {completedAt, dueDate, query, statusId} = allTodoDTO;
+    const { completedAt, dueDate, query, statusId } = allTodoDTO;
     let filters: FilterQuery<Todo> = {
       userId,
       statusId: {
@@ -212,5 +215,214 @@ export class TodoService {
     return {
       message: "Todo deleted successfully"
     }
+  }
+
+  async totalCount(userId: string) {
+    const aggregation = [
+      {
+        $match: {
+          userId,
+          statusId: { $ne: status.DELETED },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalCompleted: {
+            $sum: {
+              $cond: [{ $eq: ["$statusId", status.COMPLETED] }, 1, 0],
+            },
+          },
+          totalPending: {
+            $sum: {
+              $cond: [{ $eq: ["$statusId", status.PENDING] }, 1, 0],
+            },
+          },
+          totalCount: {
+            $count: {}
+          }
+        },
+      },
+      {
+        $project: {
+          _id: 0, // Exclude the _id field from the output
+          totalCompleted: 1,
+          totalPending: 1,
+          totalCount: 1,
+        },
+      },
+    ];
+
+    const results = await this.Todo.aggregate<TotalCountResult>(aggregation);
+    return results[0];
+  }
+
+  async perDayCount(userId: string) {
+    const aggregation = [
+      {
+        $match: {
+          userId,
+          statusId: { $ne: status.DELETED },
+        },
+      },
+      {
+        $project: {
+          dayOfTheweek: {
+            $dayOfWeek: "$createdAt"
+          }
+        }
+      },
+      {
+        $group : {
+          _id: "$dayOfTheweek",
+          "countOnDay": {
+            $count: {}
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          dayOfWeek: "$_id", 
+          countOnDay: 1
+        }
+      }
+    ]
+    const results = await this.Todo.aggregate<PerDayCcountResult>(aggregation);
+    return results;
+  }
+
+  async overdueCount(userId: string): Promise<OverDueCountResult> {
+    const overDueTodos = await this.Todo.countDocuments({
+      userId,
+      $or: [
+        {
+          statusId: status.PENDING,
+          dueDate: {
+            $lt: new Date()
+          }
+        },
+        {
+          statusId: status.COMPLETED,
+          $expr: {
+            $lt: [ "$dueDate" , "$completedAt" ]
+          }
+        }
+      ]
+    })
+    return {
+      overDueTodoCount: overDueTodos
+    };
+  }
+
+  async avgCompletedPerDay(userId: string) {
+    const aggregation = [
+      {
+        $match: {
+          userId,
+          statusId: status.COMPLETED,
+        },
+      },
+      {
+        $project: {
+          dayOfTheMonth: {
+            $dayOfMonth: "$completedAt"
+          }
+        }
+      },
+      {
+        $group : {
+          _id: "$dayOfTheMonth",
+          "countOnDay": {
+            $count: {}
+          }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          avgCompletedPerDay: {
+            $avg: "$countOnDay"
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          avgCompletedPerDay: 1
+        }
+      },
+    ]
+    const results = await this.Todo.aggregate<AvgCompletedPerDay>(aggregation);
+    return results[0];
+  }
+
+
+  async maxCompletedPerDay(userId: string) {
+    const aggregation = [
+      {
+        $match: {
+          userId,
+          statusId: status.COMPLETED,
+        },
+      },
+      {
+        $project: {
+          dayOfTheMonth: {
+            $dayOfMonth: "$completedAt"
+          },
+          completedAt: 1
+        }
+      },
+      {
+        $group : {
+          _id: "$dayOfTheMonth",
+          "countOnDay": {
+            $count: {}
+          },
+          completedAt: { $push: "$completedAt" } 
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          maxCompletedPerDay: {
+            $max: "$countOnDay"
+          },
+          completedAt: {
+            $push: {
+              $cond: [{ $eq: ["$countOnDay", { $max: "$countOnDay" }] }, "$completedAt", null]
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          maxCompletedPerDay: 1,
+          completedAt: 1
+        }
+      },
+    ];
+    
+    const results = await this.Todo.aggregate(aggregation);
+    if (results.length) {
+      let date: Date;
+      for (const dates of results[0].completedAt) {
+        if (dates.length === results[0].maxCompletedPerDay) {
+          date = dates[0]
+        }
+      }
+      const maxCompletedPerDay: MaxCompletedPerDay = {
+        noOfTasks: results[0].maxCompletedPerDay,
+        date, 
+      }
+      return maxCompletedPerDay
+    } else {
+      return {
+        message: "No task completed."
+      }
+    }
+
   }
 }

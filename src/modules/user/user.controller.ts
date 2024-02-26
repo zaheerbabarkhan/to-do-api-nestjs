@@ -2,8 +2,9 @@ import { Controller, Get, Post, Body, Query, Request, UseGuards } from '@nestjs/
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserLoginDTO } from './dto/user-login.dto';
-import { User } from '../../schemas/User.schema';
+import { User, UserDocument } from '../../schemas/User.schema';
 import { AuthGuard } from '../auth/auth.guard';
+import { GoogleOAuthGuard } from '../auth/google.guard';
 
 @Controller('users')
 export class UserController {
@@ -32,4 +33,16 @@ export class UserController {
     return this.userService.logout(req.user._id, token);
   }
   
+  @Get("google")
+  @UseGuards(GoogleOAuthGuard)
+  async googleAuth(@Request() req) {}
+
+  @Get('google-redirect')
+  @UseGuards(GoogleOAuthGuard)
+  googleAuthRedirect(@Request() req) {
+    if (!req.user) {
+      return 'No user from google';
+    }
+    return this.userService.googleLogin(req.user as UserDocument);
+  }
 }

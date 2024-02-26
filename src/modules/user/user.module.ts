@@ -7,6 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 import config from 'src/config/config';
 import { RedisModule } from '../redis/redis.module';
 import { Schemas } from 'src/schemas';
+import { GoogleStrategy } from 'src/config/google.passport';
 
 
 @Module({
@@ -14,6 +15,6 @@ import { Schemas } from 'src/schemas';
     secret: config.JWT.SECRET_KEY
   }), MailModule, RedisModule],
   controllers: [UserController],
-  providers: [UserService],
+  providers: [UserService, GoogleStrategy],
 })
 export class UserModule {}

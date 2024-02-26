@@ -129,4 +129,16 @@ export class UserService {
         message: "User logged out",
     };
   }
+
+  googleLogin(user: UserDocument) {
+    const token = this.jwtService.sign({
+      userId: user._id
+    }, {
+      expiresIn: config.JWT.EXPIRY
+    })
+    return {
+      message: "Login successful",
+      token,
+    };
+  }
 }

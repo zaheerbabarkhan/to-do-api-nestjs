@@ -8,6 +8,7 @@ import config from 'src/config/config';
 import { RedisModule } from '../redis/redis.module';
 import { Schemas } from 'src/schemas';
 import { GoogleStrategy } from 'src/config/google.passport';
+import { GithubStrategy } from 'src/config/github.passport';
 
 
 @Module({
@@ -15,6 +16,6 @@ import { GoogleStrategy } from 'src/config/google.passport';
     secret: config.JWT.SECRET_KEY
   }), MailModule, RedisModule],
   controllers: [UserController],
-  providers: [UserService, GoogleStrategy],
+  providers: [UserService, GoogleStrategy, GithubStrategy],
 })
 export class UserModule {}

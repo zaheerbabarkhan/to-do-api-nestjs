@@ -5,6 +5,7 @@ import { UserLoginDTO } from './dto/user-login.dto';
 import { User, UserDocument } from '../../schemas/User.schema';
 import { AuthGuard } from '../auth/auth.guard';
 import { GoogleOAuthGuard } from '../auth/google.guard';
+import { GithubOAuthGuard } from '../auth/github.guard';
 
 @Controller('users')
 export class UserController {
@@ -43,6 +44,19 @@ export class UserController {
     if (!req.user) {
       return 'No user from google';
     }
-    return this.userService.googleLogin(req.user as UserDocument);
+    return this.userService.oAuthLogin(req.user as UserDocument);
+  }
+
+  @Get("github")
+  @UseGuards(GithubOAuthGuard)
+  async githubAuth(@Request() req) {}
+
+  @Get('github-redirect')
+  @UseGuards(GithubOAuthGuard)
+  githubAuthRedirect(@Request() req) {
+    if (!req.user) {
+      return 'No user from google';
+    }
+    return this.userService.oAuthLogin(req.user as UserDocument);
   }
 }

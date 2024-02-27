@@ -130,7 +130,7 @@ export class UserService {
     };
   }
 
-  googleLogin(user: UserDocument) {
+  oAuthLogin(user: UserDocument) {
     const token = this.jwtService.sign({
       userId: user._id
     }, {

@@ -8,7 +8,6 @@ import { TodoFile, FileDocument } from 'src/schemas/file.schema';
 import status from 'src/constants/status';
 import { UpdateTodoDto } from './dto/update-todo.dto';
 import { AllTodoDTO } from './dto/all-todo.dto';
-import moment from "moment";
 import { AvgCompletedPerDay, MaxCompletedPerDay, OverDueCountResult, PerDayCcountResult, TotalCountResult } from './types/reports.types';
 
 @Injectable()
@@ -102,27 +101,36 @@ export class TodoService {
       }
     }
     if (completedAt) {
-      const completedAtMoment = moment(completedAt).utc()
+      const completedDateObject = new Date(completedAt);
+      completedDateObject.setUTCHours(0, 0, 0, 0);
+      const nextDay = new Date(completedDateObject);
+      nextDay.setDate(nextDay.getDate() + 1);
       filters = {
         ...filters,
         completedAt: {
-          $gte: completedAtMoment.startOf("day"),
-          $lt: completedAtMoment.endOf("day")
+          $gte: completedDateObject,
+          $lt: nextDay
         }
       }
     }
     if (dueDate) {
-      const dueDateMoment = moment(dueDate).utc()
+      const dueDateObject = new Date(dueDate);
+      dueDateObject.setUTCHours(0, 0, 0, 0);
+      const nextDay = new Date(dueDateObject);
+      nextDay.setDate(nextDay.getDate() + 1);
+
+      nextDay.setUTCHours(0, 0, 0, 0);
       filters = {
         ...filters,
         dueDate: {
-          $gte: dueDateMoment.startOf("day"),
-          $lt: dueDateMoment.endOf("day")
+          $gte: dueDateObject,
+          $lt: nextDay
         }
       }
     }
     return filters
   }
+
   async findOne(id: string, userId: string) {
     const todo = await this.Todo.findOne({
       _id: id,
@@ -273,7 +281,7 @@ export class TodoService {
         }
       },
       {
-        $group : {
+        $group: {
           _id: "$dayOfTheweek",
           "countOnDay": {
             $count: {}
@@ -283,7 +291,7 @@ export class TodoService {
       {
         $project: {
           _id: 0,
-          dayOfWeek: "$_id", 
+          dayOfWeek: "$_id",
           countOnDay: 1
         }
       }
@@ -305,7 +313,7 @@ export class TodoService {
         {
           statusId: status.COMPLETED,
           $expr: {
-            $lt: [ "$dueDate" , "$completedAt" ]
+            $lt: ["$dueDate", "$completedAt"]
           }
         }
       ]
@@ -331,7 +339,7 @@ export class TodoService {
         }
       },
       {
-        $group : {
+        $group: {
           _id: "$dayOfTheMonth",
           "countOnDay": {
             $count: {}
@@ -375,12 +383,12 @@ export class TodoService {
         }
       },
       {
-        $group : {
+        $group: {
           _id: "$dayOfTheMonth",
           "countOnDay": {
             $count: {}
           },
-          completedAt: { $push: "$completedAt" } 
+          completedAt: { $push: "$completedAt" }
         }
       },
       {
@@ -404,7 +412,7 @@ export class TodoService {
         }
       },
     ];
-    
+
     const results = await this.Todo.aggregate(aggregation);
     if (results.length) {
       let date: Date;
@@ -415,7 +423,7 @@ export class TodoService {
       }
       const maxCompletedPerDay: MaxCompletedPerDay = {
         noOfTasks: results[0].maxCompletedPerDay,
-        date, 
+        date,
       }
       return maxCompletedPerDay
     } else {

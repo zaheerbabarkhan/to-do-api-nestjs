@@ -433,4 +433,52 @@ export class TodoService {
     }
 
   }
+
+  async similarTodos(userId: string) {
+    const pipeline = [
+      {
+          $match: {
+              userId: userId,
+              statusId: { $ne: status.DELETED }
+          }
+      },
+      {
+          $group: {
+              _id: "$title",
+              ids: { $push: { $toString: "$_id" } },
+              count: { $sum: 1 }
+          }
+      },
+      {
+          $match: {
+              count: { $gt: 1 }
+          }
+      },
+      {
+        $project: {
+          "title": "$_id",
+          similarTodos: "$ids",
+          _id: 0
+        }
+      }
+    ];
+
+    const results = await this.Todo.aggregate(pipeline);
+    // return results;
+    const allSimilarPromises = results.map(result=> {
+      console.log(result.similarTodos);
+      return this.Todo.find({
+              _id: {
+                  $in: result.similarTodos
+              },
+          })
+
+      });
+  const allSimilarResults = await Promise.allSettled(allSimilarPromises);
+  const similarTodos = allSimilarResults
+      .filter((result): result is PromiseFulfilledResult<ToDoDocument[]> => result.status === "fulfilled")
+      .map((result) => result.value);
+  return similarTodos;
+  }
 }
+

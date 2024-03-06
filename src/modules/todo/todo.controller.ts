@@ -51,6 +51,11 @@ export class TodoController {
   async maxCompletedPerDay(@Request() req) {
     return this.todoService.maxCompletedPerDay(req.user._id)
   }
+
+  @Get("similar")
+  async similarTodos(@Request() req) {
+    return this.todoService.similarTodos(req.user._id)
+  }
   
   @Get(':id')
   findOne(@Param('id') id: string, @Request() req) {

@@ -1,11 +1,11 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTodoDto } from './dto/create-todo.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { ToDoDocument, Todo } from 'src/schemas/todo.schema';
+import { ToDoDocument, Todo } from '../../schemas/todo.schema';
 import { FilterQuery, Model, SortOrder } from 'mongoose';
 import { S3Service } from '../s3/s3.service';
-import { TodoFile, FileDocument } from 'src/schemas/file.schema';
-import status from 'src/constants/status';
+import { TodoFile, FileDocument } from '../../schemas/file.schema';
+import status from '../../constants/status';
 import { UpdateTodoDto } from './dto/update-todo.dto';
 import { AllTodoDTO } from './dto/all-todo.dto';
 import { AvgCompletedPerDay, MaxCompletedPerDay, OverDueCountResult, PerDayCcountResult, TotalCountResult } from './types/reports.types';

@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { CronJobsService } from './cron.servicve';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Schemas } from 'src/schemas';
+import { Schemas } from '../../schemas';
 import { JwtModule } from '@nestjs/jwt';
-import config from 'src/config/config';
+import config from '../../config/config';
 import { MailModule } from '../mail/mail.module';
 
 @Module({

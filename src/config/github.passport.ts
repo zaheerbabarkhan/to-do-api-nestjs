@@ -3,10 +3,10 @@ import { Injectable } from '@nestjs/common';
 import { Strategy, Profile} from "passport-github2";
 
 import config from './config';
-import { User, UserDocument } from 'src/schemas/User.schema';
+import { User, UserDocument } from '../schemas/User.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { AccountType } from 'src/types/user.types';
+import { AccountType } from '../types/user.types';
 import { VerifyCallback } from 'passport-google-oauth20';
 
 @Injectable()

@@ -3,8 +3,8 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Model } from 'mongoose';
-import status from 'src/constants/status';
-import { User, UserDocument } from 'src/schemas/User.schema';
+import status from '../../constants/status';
+import { User, UserDocument } from '../../schemas/User.schema';
 import { MailService } from '../mail/mail.service';
 
 @Injectable()

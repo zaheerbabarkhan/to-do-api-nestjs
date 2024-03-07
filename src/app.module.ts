@@ -11,11 +11,12 @@ import * as nodemailer from "nodemailer";
 import { Schemas } from './schemas';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CronModule } from './modules/cron/cron.module';
-const smtpConfig = config.SMTP;
+
+const dbConfig = config.NODE_ENV === "test" ? config.TEST_DB : config.DB
 @Module({
   imports: [
-    MongooseModule.forRoot(`mongodb+srv://${config.DB.DB_USER}:${config.DB.DB_PASSWORD}@cluster0.xlw87.mongodb.net/?retryWrites=true&w=majority`, {
-      dbName: config.DB.DB_NAME
+    MongooseModule.forRoot(`mongodb+srv://${dbConfig.DB_USER}:${dbConfig.DB_PASSWORD}@cluster0.xlw87.mongodb.net/?retryWrites=true&w=majority`, {
+      dbName: dbConfig.DB_NAME
     }), MongooseModule.forFeature(Schemas), MailerModule.forRoot({
       transport: `smtps://${config.SMTP.SMTP_EMAIL}:${config.SMTP.SMTP_PASSWORD}@${config.SMTP.SMTP_HOST}`,
       //   transport: nodemailer.createTransport({

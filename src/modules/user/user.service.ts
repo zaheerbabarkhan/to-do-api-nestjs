@@ -1,15 +1,14 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from '../../schemas/User.schema';
 import { Model } from 'mongoose';
-import config from 'src/config/config';
+import config from '../../config/config';
 import * as bcrypt from "bcrypt";
 import { MailService } from '../mail/mail.service';
 import { JwtService } from '@nestjs/jwt';
 import { UserLoginDTO } from './dto/user-login.dto';
-import status from 'src/constants/status';
+import status from '../../constants/status';
 import { Payload } from '../../types/jwt.types';
 import { RedisService } from '../redis/redis.service';
 

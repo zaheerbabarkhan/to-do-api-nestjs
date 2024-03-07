@@ -2,7 +2,7 @@ import { BadRequestException } from "@nestjs/common";
 import { Transform, Type } from "class-transformer";
 import { IsDate, IsIn, IsNumber, IsOptional, IsString } from "class-validator";
 import { SortOrder } from "mongoose";
-import status from "src/constants/status";
+import status from "../../../constants/status";
 
 export class AllTodoDTO {
     @IsString()

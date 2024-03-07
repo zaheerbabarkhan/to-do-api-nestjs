@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
 import status from '../constants/status';
 import { ToDoDocument } from './todo.schema';
-import { S3Service } from 'src/modules/s3/s3.service';
+import { S3Service } from '../modules/s3/s3.service';
 
 export type FileDocument = HydratedDocument<TodoFile>;
 

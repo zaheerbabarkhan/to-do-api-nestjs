@@ -11,6 +11,7 @@ import { UserLoginDTO } from './dto/user-login.dto';
 import status from '../../constants/status';
 import { Payload } from '../../types/jwt.types';
 import { RedisService } from '../redis/redis.service';
+import { AccountType } from '../../types/user.types';
 
 @Injectable()
 export class UserService {
@@ -120,12 +121,29 @@ export class UserService {
 
   }
 
+  async createSocialUser(userData: { firstName: string, lastName: string, email: string }) {
+    const { email, firstName, lastName } = userData;
+    let user = await this.User.findOne({
+      email,
+    })
+    if (!user) {
+      user = await this.User.create({
+        email,
+        firstName,
+        lastName,
+        accountType: AccountType.SOCIAL,
+        statusId: status.ACTIVE
+      })
+    }
+    return user
+  }
+  
   async logout(userId: string, token: string) {
     const jwtData = this.jwtService.decode(token);
-    const expiryTimeLeft = Math.floor(Math.abs( jwtData.exp - (Date.now() /1000)));
+    const expiryTimeLeft = Math.floor(Math.abs(jwtData.exp - (Date.now() / 1000)));
     await this.redisService.storeUserToken(token, userId, expiryTimeLeft);
     return {
-        message: "User logged out",
+      message: "User logged out",
     };
   }
 

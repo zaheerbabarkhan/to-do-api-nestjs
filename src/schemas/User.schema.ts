@@ -18,7 +18,7 @@ export class User {
   @Prop()
   accountType: string;
 
-  @Prop({ required: true })
+  @Prop()
   password: string;
 
   @Prop({ type: Number, default: status.PENDING })

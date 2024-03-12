@@ -6,10 +6,13 @@ import { User, UserDocument } from '../schemas/User.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AccountType } from '../types/user.types';
+import status from 'src/constants/status';
+import { UserService } from 'src/modules/user/user.service';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
-    constructor(@InjectModel(User.name) private readonly User: Model<UserDocument>) {
+    constructor(@InjectModel(User.name) private readonly User: Model<UserDocument>,
+    private readonly userService: UserService) {
         super({
             clientID: config.OAUTH.GOOGLE_CLIENT_ID,
             clientSecret: config.OAUTH.GOOGLE_CLIENT_SECRET,
@@ -28,17 +31,11 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
             const firstName = profile.name?.givenName as string;
             const lastName = profile.name?.familyName as string;
 
-            let user = await this.User.findOne({
+            const user = await this.userService.createSocialUser({
                 email,
-            })
-            if (!user) {
-                user = await this.User.create({
-                    email,
-                    firstName,
-                    lastName,
-                    accountType: AccountType.SOCIAL
-                })
-            }
+                firstName,
+                lastName
+            });
             done(null, user);
         }
     }

@@ -62,5 +62,6 @@ describe('UserService', () => {
     })
 
     expect(newUser).toBeDefined();
+    expect(createResult.user._id).toBe(createResult.user._id)
   })
 });

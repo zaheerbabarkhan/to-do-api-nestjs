@@ -35,7 +35,8 @@ export class UserService {
       email,
       firstName,
       lastName,
-      password: passwordHash
+      password: passwordHash,
+      accountType: AccountType.APP
     });
     const token = this.jwtService.sign({
       userId: newUser._id
@@ -118,6 +119,45 @@ export class UserService {
     return {
       message: "Email confirmed successfully"
     }
+
+  }
+
+  async forgotPassword(email: string) {
+    const user = await this.User.findOne({
+      email,
+      statusId: {
+        $ne: status.DELETED
+      },
+      accountType: AccountType.APP
+    })
+
+    if (!user) {
+      throw new HttpException("Invalid credentials", HttpStatus.BAD_REQUEST)
+    }
+
+    if (user.statusId === status.PENDING) {
+      throw new HttpException("Confirm your email please", HttpStatus.BAD_REQUEST)
+    }
+
+    const token = this.jwtService.sign({
+      userId: user._id
+    }, {
+      expiresIn: config.JWT.EXPIRY
+    });
+
+    try {
+      if (config.NODE_ENV !== "test") {
+        await this.mailService.forgotPassword(user.email, token);
+      }
+      return {
+        message: "Email has been sent to your inbox for change password."
+      }
+    } catch (error) {
+      console.log("Error occurred during sending forgot password email",error);
+      return {
+        message: "Email cannot be sent right now, please try later or contact support"
+      }
+    } 
 
   }
 
